@@ -42,9 +42,10 @@ public class P_2098 {
 	
 	//처음에서 목적지까지를 계산한다.
 	public static int tsp(int cur, int visit) {
-		
+		System.out.println(visit);
 		//끝까지 왔다면 
 		if(visit == (1 << n)-1) {
+			System.out.println("끝 : " + visit);
 			//처음으로 돌아갈 수 있는지를 체크한다.
 			if(map[cur][0] != 0) {
 				return map[cur][0];
@@ -62,10 +63,11 @@ public class P_2098 {
 		//키포인트는, 출발 -> 경유 -> 목적지 이다.
 		for (int i = 0; i < n; i++) {
 			
-			//길이 있는데 
+			//길이 있는데 방문하지 않은 i번째는 아래 재귀로 들어갈 때 or 연산으로 방문시킨다.
 			if((visit & (1<<i)) == 0 && map[cur][i] != 0) {
 				
 				//재귀로 인해, 목적지에서부터 집으로 내려오면서 최소값을 찾는다.
+				//or 연산으로 방문시킴
 				distance[cur][visit] = Math.min(distance[cur][visit], map[cur][i] + tsp(i, (visit | 1<<i)));
 			}
 		}
