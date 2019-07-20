@@ -4,12 +4,12 @@ https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/
 46 Testing
 ======
 
-Spring Boot는 앱을 테스트할 때 도움이 되는 어노테이션과 유틸들을 제공한다. 테스트 지원은 두개의 모듈로서 제공된다 : ** spring-boot-test ** 는 코어를 포함하고, ** spring-boot-test-autoconfigure ** 는 auto-configuration을 지원한다.
-대부분의 개발자들은 JUnit, AssertJ, Hamcrest, 다른 유용한 라이브러리들 같은 스프링 부트 테스트 모듈들을 가진 ** spring-boot-starter-test ** 스타터를 사용한다.
+Spring Boot는 앱을 테스트할 때 도움이 되는 어노테이션과 유틸들을 제공한다. 테스트 지원은 두개의 모듈로서 제공된다 : **spring-boot-test** 는 코어를 포함하고, **spring-boot-test-autoconfigure** 는 auto-configuration을 지원한다.
+대부분의 개발자들은 JUnit, AssertJ, Hamcrest, 다른 유용한 라이브러리들 같은 스프링 부트 테스트 모듈들을 가진 **spring-boot-starter-test** 스타터를 사용한다.
 
 46.1 테스트 범위 의존성
 ----
-** spring-boot-starter-test ** 스타터는 (test scope안에서) 아래의 라이브러리들을 포함한다.:
+**spring-boot-starter-test** 스타터는 (test scope안에서) 아래의 라이브러리들을 포함한다.:
 
 * JUnit 4 : Java 앱의 단위 테스트를 위한 사실상의 표준
 * Spring Test & Spring Boot Test : 스프링 부트 앱을 위한 유틸리티와 통합 테스트 지원
@@ -33,32 +33,32 @@ printf의 CPU 연산 :  printf를 사용하기 전에 CPU를 초기화하고, 포트를 설정하고, U
 
 자주, 스프링 ApplicationContext와 단위 테스트를 넘어서 통합 테스트를 시작해야 한다. 이는 다른 인프라에 연결할 필요가 있거나 애플리케이션의 디플로이를 요구하는 것 없이 통합 테스트를 수행하기에 유용하다. 
 
-스프링 프레임워크는 그런 통합 테스트를 위한 전용 테스트 모듈을 포함한다. ** org.springframework ** 에 대한 의존성을 직접 선언할 수 있다. : ** org.springframework:spring-test ** 나 ** spring-boot-starter-test ** 스타터를 사용해서 일시적으로 가져온다.
-만약 ** spring-test ** 모듈을 전에 사용해본적이 없으면, 스프링 프레임워크 레퍼런스 문서에서 relevant section을 읽고 시작해야만한다.
+스프링 프레임워크는 그런 통합 테스트를 위한 전용 테스트 모듈을 포함한다. **org.springframework** 에 대한 의존성을 직접 선언할 수 있다. : **org.springframework:spring-test** 나 **spring-boot-starter-test** 스타터를 사용해서 일시적으로 가져온다.
+만약 **spring-test** 모듈을 전에 사용해본적이 없으면, 스프링 프레임워크 레퍼런스 문서에서 relevant section을 읽고 시작해야만한다.
 
 (https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testing)
 
 46.3 스프링 부트 애플리케이션 테스팅
 -----
 
-스프링 부트 애플리케이션은 스프링 ** ApplicationContext ** 여서 매우 특별한 것은 바닐라 스프링 컨텍스트에서 일반적으로 수행할 작업을 넘어서는 테스팅을 해야한다.
+스프링 부트 애플리케이션은 스프링 **ApplicationContext** 여서 매우 특별한 것은 바닐라 스프링 컨텍스트에서 일반적으로 수행할 작업을 넘어서는 테스팅을 해야한다.
 
 (바닐라 : plain. 순수함. 예를들어서 Vanilla Javascript : JQuery등을 쓰지 않은 순수 자바스크립트)
 
 ! 외부 프로퍼티, 로깅, 스프링 부트의 다른 기능들은 SpringApplication을 사용한다면 기본적으로 설치된다.
 
-스프링 부트는 @SpringBootTest 어노테이션을 제공하고, 스프링 부트 기능을 필요로 할 때 기본적인 ** spring-test ** @ContextConfiguration 어노테이션을 대안으로 사용한다.
+스프링 부트는 @SpringBootTest 어노테이션을 제공하고, 스프링 부트 기능을 필요로 할 때 기본적인 **spring-test** @ContextConfiguration 어노테이션을 대안으로 사용한다.
 어노테이션은 SpringApplication을 통한 테스트에서 사용되는 ApplicationContext를 생성하는 것으로서 동작한다. 게다가 @SpringBootTest 는 애플리케이션의 더 구체적인 조각들을 테스트하는 것을 제공한다.
 
 ! JUnit 4를 사용한다면, @RunWith(SpringRunner.class)를 추가하는 것을 잊지마라. 안그러면 어노테이션은 무시될 수 있다. 만약 JUnit5 를 사용한다면, @ExtendWith(SpringExtension.class)를 @SpringBootTest로서 추가할 필요 없고 다른 @...Test 어노테이션들은 이미 어노테이트 되어있다.
 
-** 기본적으로, @SpringBootTest는 서버를 시작하지 않는다. ** @SPringBootTest 의 webEnvironment 속성을 사용하여 테스트 실행 방법을 더 자세히 정의할 수 있다. :
+** 본적으로, @SpringBootTest는 서버를 시작하지 않는다.** @SPringBootTest 의 webEnvironment 속성을 사용하여 테스트 실행 방법을 더 자세히 정의할 수 있다. :
 
 * MOCK(default) : 웹 ApplicationContext을 로드하고 mock 웹 환경을 제공한다. 임베디드 서버는 이 어노테이션을 사용할 때 시작되진 않는다. 만약 웹 환경이 클래스패스를 사용하지 않는다면, 이 모드는 일반 웹이 아닌 ApplicationContext를 만드는데 투명하게 적용된다.
  웹 응용 프로그램의 mock 기반 테스트를 위해 @AutoCOnfigureMockMvc 나 @AutoConfigureWebTestClient를 함께 사용할 수 있다. 
 
- * RANDOM_PORT : ** WebServerApplicationContext ** 를 로드하고 실제 웹 환경을 제공한다. 임베디드 서버는 랜덤 포트를 listen하고 시작된다.
- * DEFINED_PORT : ** WebServerApplicationContext를 로드하고 실제 웹 환경을 제공한다. 임베디드 서버는 정의된 포트를 listen하고 시작된다. (application.properties에서) 또는 기본 8080포트로.
+ * RANDOM_PORT : **WebServerApplicationContext** 를 로드하고 실제 웹 환경을 제공한다. 임베디드 서버는 랜덤 포트를 listen하고 시작된다.
+ * DEFINED_PORT : **WebServerApplicationContext**를 로드하고 실제 웹 환경을 제공한다. 임베디드 서버는 정의된 포트를 listen하고 시작된다. (application.properties에서) 또는 기본 8080포트로.
  * NONE : ApplicationContext를 SpringApplication을 사용해서 로드하지만 어떠한 웹 환경(mock이나 다른것들도) 제공하지 않는다.
  
  ! 만약 테스트가 @Transactional 이라면, 기본적으로 각 테스트 메소드의 끝에는 트랜잭션이 롤백된다. 하지만 RANDOM_PORT나 DEFINED_PORT 와 함께 배열을 사용하면 암시적으로 실제 서블릿 환경을 제공하므로, HTTP 클라이언트와 서버는 별도의 쓰레드에서 실행된다. 이 경우 서버에서 시작된 트랜잭션은 롤백도지 않는다.
@@ -67,7 +67,7 @@ printf의 CPU 연산 :  printf를 사용하기 전에 CPU를 초기화하고, 포트를 설정하고, U
 # 46.3.1 웹 애플리케이션 타입 탐지
 만약 Spring MVC를 쓴다면, 보통 MVC 기반의 애플리케이션 컨텍스트는 configure된다. 만약 Spring WebFlux 만을 쓴다면 WebFlux 기반의 애플리케이션 컨텍스트를 대신해 configure하고 탐지할 것이다.
 
-만약 둘다 쓴다면 Spring MVC가 먼저 탐지된다. 이 시나리오에서 반응성 웹 애플리케이션을 테스트하길 원한다면 아래와 같이 ** spring.main.web-application-type ** 프로퍼티를 세팅하자.
+만약 둘다 쓴다면 Spring MVC가 먼저 탐지된다. 이 시나리오에서 반응성 웹 애플리케이션을 테스트하길 원한다면 아래와 같이 **spring.main.web-application-type** 프로퍼티를 세팅하자.
 
 <pre><code>
 	@RunWith(SpringRunner.class)
