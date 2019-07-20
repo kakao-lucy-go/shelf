@@ -78,7 +78,7 @@ printf의 CPU 연산 :  printf를 사용하기 전에 CPU를 초기화하고, 포트를 설정하고, U
 # 46.3.2 Test configure 탐지
 만약 스프링 테스트 프레임워크와 친숙하다면, 스프링 @Configuration 을 구체화하기 위해 @ContextConfiguration(classes=...) 를 사용할지모른다. 대안적으로, 테스트안에서 감싸진 @Configuration 클래스들은 자주 사용된다.
 
-스프링 부트 애플리케이션을 테스팅할 때, 이는 자주 요구되진 않는다. 스프링 부트의 @*Test 어노테이션은 모호하게 정의할 떄마다 자동으로 우선적으로 configuration을 찾는다.
+스프링 부트 애플리케이션을 테스팅할 때, 이는 자주 요구되진 않는다. 스프링 부트의 @*Test 어노테이션은 모호하게 정의할 때마다 자동으로 우선적으로 configuration을 찾는다.
 
 이 서치 알고리즘은 @SpringBootApplication 이나 @SpringBootConfiguration으로 어노테이트된 클래스들을 발견할 때까지 테스트를 포함하는 패키지로부터 동작한다. 합리적인 방법으로 코드를 구조화하면 주요 구성이 일반적으로 발견된다.
 
@@ -258,7 +258,7 @@ public class SampleJmxTests {
 
 #46.3.7 Bean을 mocking 하고 spying
 (mocking : 테스트를 위해 가짜 객체를 사용할 수 있도록 하는 것)
-테스트할 때, 때때로 애플리케이션 컨텍스트안에 특정 컴포넌트를 mocking할 필요가 있다. 예를 들어서, 개발 동안 사용 불가능한 몇몇 원격 서비스를 가질 수 있다. Mocking은 실제 환경에서 트리거하기 어려운 실패를 시뮬레이션하기 원할 떄 유용할 수 있다.
+테스트할 때, 때때로 애플리케이션 컨텍스트안에 특정 컴포넌트를 mocking할 필요가 있다. 예를 들어서, 개발 동안 사용 불가능한 몇몇 원격 서비스를 가질 수 있다. Mocking은 실제 환경에서 트리거하기 어려운 실패를 시뮬레이션하기 원할 때 유용할 수 있다.
 
 스프링 부트는 @MockBean 어노테이션을 포함하는데, 이 어노테이션을 사용해 ApplicationContext 내부의 Bean에 대한 Mockito mock 객체를 정의할 수 있다. 어노테이션을 사용하여 새로운 빈을 추가하거나 기존의 단일 빈 정의를 대체할 수 있다. 
 어노테이션은 테스트 클래스, 테스트안의 필드에서 또는 @Configuration 클래스와 필드에서 직접 사용될 수 있다. 필드에 사용될 때, 생성된 mock의 인스턴스 또한 주입된다. Mock 빈은 자동적으로 각 테스트 메소드 후에 리셋된다.
@@ -388,7 +388,7 @@ assertThat(json.write(message))
 
 #46.3.10 자동 configure된 스프링 MVC 테스트
 스프링 MVC 컨트롤러가 예상대로 동작하는지 테스트하려면 @WebMvcTest 어노테이션을 사용한다. @WebMvcTest는 Spring MVC 인프라를 자동으로 configure하고 스캔된 빈을 @Controller, @ControllerAdvice, @JsonComponent, Converter, GenericConverter, Filter, WebMvcConfigurer 및 HandlerMethodArgumentResolver 로 제한한다.
-이 어노테이션을 사용할 떄 일반 @ComponentBean은 스캔되지 않는다.
+이 어노테이션을 사용할 때 일반 @ComponentBean은 스캔되지 않는다.
 
 ! 자동 configure 된 세팅들은 @WebMvcTest에 의해 사용될 수 있다.
 ! 가령 Jackson Module 같이 특정 컴포넌트를 등록할 필요가 있다면 테스트에 @Import를 사용해서 부가적인 Configuration 클래스들을 가져올 수 있다.
@@ -468,7 +468,7 @@ public class MyHtmlUnitTests {
 
 ! 기본적으로, 스프링 부트는 WebDriver 빈을 특별한 스코프에 넣어 각 테스트 후에 드라이버가 종료되고 새 인스턴스가 주입되도록 한다. 이 동작을 원하지 않는다면 @Scope("singleton") 을 WebDriver를 @Bean 정의에 추가할 수 있다.
 
-! 스프링 부트가 생성한 webDriver 스코프는 동일한 이름의 사용자 정의 스코프를 대체한다. webDriver 스코프를 정의하면 @WebMvcTest를 사용할 떄 작동하지 않는 것을 알 수 있다.
+! 스프링 부트가 생성한 webDriver 스코프는 동일한 이름의 사용자 정의 스코프를 대체한다. webDriver 스코프를 정의하면 @WebMvcTest를 사용할 때 작동하지 않는 것을 알 수 있다.
 
 스프링 시큐리티가 클래스패스에 있다면, @WebMvcTest는 WebSecurityConfigurer 빈을 스캔할 것이다. 시큐리티가 그 테스트에 완전하게 비활성화되는 대신에, 스프링 시큐리티의 테스트 지원을 사용할 수 있다. 어떻게 스프링 시큐리티의 MockMvc 지원을 사용하는 지는 Chapter 80. Testing With Spring Security를 확인하자.
 
