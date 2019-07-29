@@ -1,12 +1,1 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# shelf
-shelf for docs stuied
-=======
-# algo
-for my algorithm learning
->>>>>>> algo/master
-=======
-# learning_ref
-learning reference
->>>>>>> learning_ref/master
+공부한 것들을 모아두는 곳입니다.
