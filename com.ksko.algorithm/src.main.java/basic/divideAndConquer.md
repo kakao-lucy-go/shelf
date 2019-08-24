@@ -94,3 +94,4 @@ lomto(A[], l,r) {
   
 ## 쿼드트리  
 
+https://github.com/mychum1/shelf/blob/master/com.ksko.algorithm/src.main.java/baekjoon/P_1992.java
