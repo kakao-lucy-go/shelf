@@ -8,6 +8,20 @@
 ![Alt text](/imgs/분할정복.jpg)
 ![Alt text](/imgs/동적계획.jpg)
 
+## 대표적인 문제 - 외발뛰기  
+<pre><code>
+int n, board[100][100];
+int cache[100][100];
+int jump(int y, int x) {
+	if(y>=x || x>=n) return 0;
+	if(y=n-1 && x==n-1) return 1;
+	int ret = cache[y][x];
+	if(ret!=-1) return ret;
+	int jumpSize = board[y][x];
+	return ret = (jump(y+jumpSize, x) || jump(y, x+jumpSize));
+}
+</code></pre>  
+  
 ## 대표적인 문제 - 이항 계수  
 n개의 서로 다른 원소 중에서 r개를 순서없이 골라내는 경우의 수  
 ![Alt text](/imgs/이항계수.jpg)  
