@@ -59,5 +59,51 @@ AuthorizationServerTokenServices 인터페이스는 OAuth 2.0 토큰을 관리�
 3. JSON Web Token (JWT) 는 토큰안에 권한에 대한 모든 정보가 인코딩되어 저장되어있다. 한가지 단점은 엑세스 토큰을 쉽게 취소할 수 없어서 보통 짧은 만료 기간으로 권한을 주고 취소는 리프레시 토큰으로 다뤄진다. 또다른 단점은 토큰은 많은 크리덴셜 정보가 들어가기 때문에 꽤나 무겁다. JtwTokenStore는 정말 어떠한 데이터를 영속하지 않아서 저장이란 개념이 아니지만 인증 정보를 번역하는 역할을 DefaultTokenServices가 한다.  
   
 ## JWT 토큰  
-JWT 토큰을 사용하려면 인증서버에 JwtTokenStore가 있어야한다. 
+JWT 토큰을 사용하려면 인증서버에 JwtTokenStore가 있어야한다. 리소스서버는 토큰을 디코딩할 필요가 있고, JwtTokenStore는 JwtAccessTokenConveter에 의존성이있고 인증서버와 리소스서버 둘다 같은 확장이 필요하다. 토큰은 기본으로 사인되고, 리소스서버 또한 서명을 인증할 수 있어야해서 같은 서명(signing) 키가 인증서버에도 필요하거나 public key와 private key가 필요하다. public key는 인증서버에 /oauth/token_key 에 노출되고 "denyAll()" 접근 룰제 보호된다. AuthorizationServerSecurityConfigurer(public key르 permitAll()되는) SpEL 표현식으로 주입된다.  
+  
+JwtTokenStore는 사용하려면 "spring-security-jwt"가 필요하다.  
+  
+## 권한 타입  
+AuthorizationEndpoint에 의해 지원되는 권한 타입은 AuthorizationServerEndpointsConfigurer를 통해 설정된다. 기본적으로 모든 권한 타입은 패스워드를 제외하고 지원된다. 아래 프로퍼티는 권한 타입에 영향을 준다 :  
+1. authenticationManager : 패스워드 권한은 AuthenticationManager를 주입함으로서 스위칭된다.  
+2. userDetailsService : userDetailsService를 주입하거나 전역으로 구성된 경우(GlobalAuthenticaitonManagerConfigurer) 리프레시 토큰 권한은 유저 디테일 체크를 포함할 것이다. 계정이 여전히 활성화 되어있는지 확인한다.  
+3. authorizaitonCodeServices : (AuthorizationCodeServices 인스턴스인) 인증 코드 서비스를 정의한다.  
+4. implicitGrantService : implicit 권한 상태를 관리한다.  
+5. tokenGranter : (권한을 전체적으로 컨트롤하고 다른 프로퍼티들을 무시) TokenGranter  
+  
+## Endpoint URL 구성  
+AuthorizationServerEndpointsConfigurer 는 pathMapping() 메소드를 가진다. 아래 두개의 인자를 설명한다 :  
+1. 기본 엔드포인트 url path  
+2. "/"로 시작하는 커스텀 패스  
+프레임워크가 제공하는 url 경로는  
+* /oauth/authorize : 인증 엔드포인트  
+* /oauth/token : 토큰 엔드포인트  
+* /oauth/confirm_access : 권한과 승인  
+* /oauth/error : 인증서버에 에러 렌더  
+* /oauth/check_token : 리소스서버가 엑세스 토큰을 디코드  
+* /oauth/token_key : JWT 토큰을 사용한다면 토큰 인증을 위한 public key 노출  
+이다.  
+  
+/oauth/authorize 인증 엔드포인트는 스프링 시큐리티를 사용해서 보호되어야만 하고, 인증된 유저만이 접근가능해야한다. 예를 들어서 표준 스프링 시큐리티 WebSecuriyConfigurer를 사용한다면 :  
+<pre><code>
+@Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests().antMatchers("/login").permitAll().and()
+        // default protection for all resources (including /oauth/authorize)
+            .authorizeRequests()
+                .anyRequest().hasRole("USER")
+        // ... more configuration, e.g. for form login
+    }
+</code></pre>
+  
+# UI 커스터마이징  
+대부분 인증 서버 엔드포인트는 기계가 주로 사용하지만 UI가 필요한 /oauth/error의 HTML 응답과 GET /oauth/confirm_access 가 있다. 프레임워크에서는 whitelabel을 사용해서 제공하고 있어서 대부분 인증서버는 자신만의 것을 제공하고 스타일링할 수 있다. 스프링 MVC 컨트롤러를 제공하는 것과 프레임워크 기본은 디스패처에서 낮은 우선순위를 제공한다. /oauth/confirm_access 엔드포인트에서 AuthorizationRequest 는 유저로부터 승인을 받을 필요가 있는 데이터들을 캐리하는 세션과 바운드한다. 요청으로부터 모든 데이터를 볼 수 있고 렌더할 수 있지만 모든 유저는 권한을 거부하거나 승인하는거에 대한 정보를 POST /oauth/authorize로 back한다. 요청 파라미터는 직접적으로 AuthorizationEndpoint에서 UserApprovalHandler로 넘어가서 더 혹은 덜 해석한다. 기본 UserApprovalHandler는 AuthorizationServerEndpointsConfigurer의 ApprovalStore가 공급되는지 여부에 의존한다(공급이 된다면 ApprovalStoreUserApprovalHandler, 되지 않는다면 TokenStoreUserApprovalHandler). 표준 승인 핸들러는 아래를 따른다. :  
+1. TokenStoreUserApprovalHandler : 간단한 yes/no 결정을 user_oauth_approval 을 통해 결정한다.  
+2. ApprovalStoreUserApprovalHandler : scope 전체와 "*"??  
+  
+CSRF 보호를 잊지마십시오.  
+  
+## SSl 시행  
+
 
