@@ -53,4 +53,11 @@ AuthorizationServerTokenServices 인터페이스는 OAuth 2.0 토큰을 관리�
 * 엑세스 토큰이 작성되면 이를 나중에 참조할 수 있도록 저장해야한다.  
 * 엑세스 토큰은 생성을 인증하는데 사용된 인증을 로드한다.  
   
-**AuthorizationServerTokenServices** 를 확장할 때, 
+**AuthorizationServerTokenServices** 를 확장할 때, 엑세스 토큰 스토리지와 포맷을 변경하기 위해 플러그될 수 있는 많은 전략들을 가진 DefaultTokenServices를 사용하는 걸 고려해보자. 기본적으로 랜덤한 값으로 토큰을 생성하고 TokenStore에 위임해서 토큰의 영속성을 제외한 모든것을 다룬다. 기본 스토어는 인메모리 확장이지만 다른 확장을 사용할수 있다.  
+1. 기본 InMemoryTokenStore는 완병하게 싱글 서버에 유용하다. 대부분 프로젝트는 여기에서 시작할 수 있고 개발 모드에 이 방식으로 운영할 수 있다. 의존성이 필요없이 쉽게 시작할 수 있다.  
+2. JdbcTokenStore는 JDBC 버전과 같다. 클래스패스에 spring-jdbc가 있어야한다.  
+3. JSON Web Token (JWT) 는 토큰안에 권한에 대한 모든 정보가 인코딩되어 저장되어있다. 한가지 단점은 엑세스 토큰을 쉽게 취소할 수 없어서 보통 짧은 만료 기간으로 권한을 주고 취소는 리프레시 토큰으로 다뤄진다. 또다른 단점은 토큰은 많은 크리덴셜 정보가 들어가기 때문에 꽤나 무겁다. JtwTokenStore는 정말 어떠한 데이터를 영속하지 않아서 저장이란 개념이 아니지만 인증 정보를 번역하는 역할을 DefaultTokenServices가 한다.  
+  
+## JWT 토큰  
+JWT 토큰을 사용하려면 인증서버에 JwtTokenStore가 있어야한다. 
+
