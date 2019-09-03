@@ -105,5 +105,90 @@ AuthorizationServerEndpointsConfigurer 는 pathMapping() 메소드를 가진다.
 CSRF 보호를 잊지마십시오.  
   
 ## SSl 시행  
+순수 HTTP는 테스팅에 좋지만 인증서버는 SSL이 사용되어야만한다. 보안 컨테이너나 프록시 뒤에서 앱을 실행할 수 있다(OAuth2와는 관련이 없다.). 스프링 시큐리티 requiresChannel() 제약조건을 사용해서 엔드포인트를 보호할 수도 있다. /authorize 엔드포인트는 평범한 앱 시큐리티의 일부분이다. /token 엔드포인트를 위해 sslOnly() 메소드를 사용해서 세팅할 수 있는 AuthorizationServerEndpointsConfigurer 에 플래그가 있다. 두 경우 모두 보안 채널 세팅은 선택적이지만 안전하지 않은 채널에서 요청을 감지하면 보안 채널이라고 생각되는 곳으로 리다이렉션한다.  
+  
+# 에러 핸들링 커스터마이징  
+인증서버에서 에러 핸들링은 표준 스프링 MVC의 기능인 @ExceptionHandler 메소드를 엔드포인트 자체에서 사용한다. 사용자는 WebResponseExceptionTranslator엔드 포인트 자체에 응답을 제공 할 수도 있다. 이는 엔드 포인트 자체에 렌더링 방식이 아닌 응답 컨텐츠를 변경하는 가장 좋은 방법이다. 예외 렌더링은 인증 엔드포인트의 경우에 (/oauth/error) Oauth 에러뷰와 토큰 엔드포인트의 경우에 HttpMessageConverters에 위임한다.  whitelabel 에러 엔드포인트는 HTML 응답으로 제공하지만 사용자들은 아마 커스텀하고싶을 것이다. @Controller에서 @RequestMapping("/oauth/error")를 추가하자.  
+  
+# 스코프에 사용자 역할 매핑  
+때때로 클라이언트에 할당된 스코프 뿐 아니라 사용자 스스로 권한에 따라 토큰의 스코프를 제한하는 것은 유용하다. DefaultOAuth2RequestFactory를 AuthorizationEndpoint에서 사용한다면 flag를 사용자의 역할에 맞는 허가된 스코프를 위해 checkUserScopes=true로 설정할 수 있다. OAuth2RequestFactory를 TokenEndpoint에 주입할 수 있지만 TokenENdpointAuthenticationFilter를 설치해야만 동작한다. - HTTP BasicAuthenticationFilter 이후에 필터를 더할 필요가 있다. 물론, 고유한 규칙을 구현하고 고유한 OAuth2RequestFactory 의 버전을 설치할 수 있다. AuthorizationServerEndpointsConfigurer는 커스텀 OAuth2RequestFactory를 주입할 수 있어서 @EnableAuthorizationServer를 사용한다면 factory를 설정하기 위한 기능을 사용할 수 있다.  
+  
+# 리소스 서버 구성  
+리소스 서버(인증서버와 같거나 분리된 앱)는 OAUth2 토큰에 의해 보호된 리소스를 서비스한다. 스프링 OAUth 는 스프링 시큐리티 인증 필터를 제공한다. @EnableResourceServer를 @Configuration 클래스에 선언해서 스위칭할 수 있고, ResourceServerConfigurer를 사용해서 구성한다. 아래는 구성될 수 있는 기능들이다. :  
+1. tokenServices : (ResourceServerTokenServices의 인스턴스인) 토큰 서비스를 정의하는 빈.  
+2. resourceId : 리소스를 위한 아이디.(선택적이지만 존재한다면 인증서버에 의해 검증될 수 있어서 추천한다.)  
+3. 다른 확장 포인트(들어오는 요청으로부터 토큰을 추출하기 위한 tokenExtractor같은 것들)  
+4. 보호된 리소스에 대한 match 요청 (기본은 all)  
+5. 보호된 리소스에 대한 접근 규칙 (기본은 "authenticated")  
+6. 스프링 시큐리티의 HttpSecurity 구성에 의해 허가된 보호된 리소스에 대한 다른 사용자 정의  
+  
+** @EnableResourceServer 어노테이션은 OAUth2AuthenticationProcessingFilter 타입의 필터를 자동으로 스프링 시큐리티 필터 체인에 추가한다. **  
+  
+ResourceServerTokenServices는 인증서버와의 계약의 나머지 절반이다.(?). 리소스서버와 인증서버가 같은 앱에 있고 DefaultTokenServices를 사용한다면 자동으로 필요한 인터페이스를 확장하기 때문에 깊게 생각하지 않아도 된다. 리소스 서버가 분리되어 있다면 인증서버의 기능과 일치하는지 확인해야 하고 토큰을 어떻게 올바르게 디코딩하는지 ResourceServerTokenServices를 제공해야한다. 인증서버와 마찬가지로, DefaultTokenServices를 사용할 수 있고 TokenStore를 통해서 표현된다. 대안은 인증서버(/oauth/check_token) 에 HTTP 리소스를 통해 토큰을 디코딩하기 위한 리소스 서버를 allow하는 스프링 오쓰 기능인 RemoteTokenServices 이다. RemoteTokenServices는 리소스 서버의 트래픽의 거대한 양이 없거나 캐시할 여유가 있는 경유 편하다. /oauth/check_token 엔드포인트를 사용하기위해 AUthorizationServerSecurityConfigurer에서 (기본은 "denyAll()") 접근 규칙을 변경해서 노출시킬 필요가 있다.  
+<pre><code>
+@Override
+		public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+			oauthServer.tokenKeyAccess("isAnonymous() || hasAuthority('ROLE_TRUSTED_CLIENT')").checkTokenAccess(
+					"hasAuthority('ROLE_TRUSTED_CLIENT')");
+		}
+</code></pre>  
+  
+예를들어서 /oauth/check_token 엔드포인트와 /oauth/token_key 엔드포인트를 구성한다. 이 두 엔드포인트는 client credentials를 사용해서 HTTP 기본 인증에 의해 보호된다.  
+  
+## OAuth-Aware 표현 핸들러 구성  
+스프링 시큐리티의 표현기반 접근 제어의 장점을 원할 수 있다. 표현 핸들러는 @EnableResourceServer 설정에 기본적으로 등록되어있을 것이다. 표현들은 #oauth2.clientHadRole, #oauth2.clientHasAnyRole, #oauth2.denyClient를 포함한다.  
+  
+# OAuth 2.0 클라이언트  
+OAuth 2.0 클라이언트 매커니즘은 다른 서버들의 보호된 리소스에 접근해야한다. 구성은 사용자가 엑세스할 수 있는 보호 자원을 설정하는 것을 포함한다. ** 클라이언트는 사용자를 위한 access token과 인증 코드를 저장하는 매커니즘이 필요하다. **  
+  
+## 보호된 리소스 설정  
+보호된 리소스(또는 원격 리소스)는 OAuth2ProtectedResourceDetails 타입의 빈 정의를 사용한다. 보호된 리소스는 아래 프로퍼티들을 가진다. :  
+1. id : 리소스의 아이디. id는 리소스를 찾기 위해 클라이언트가 사용한다.OAuth 프로토콜에서 절대 사용되지 않는다. 빈의 id로서 사용된다.  
+2. clientId : OAuth 클라이언트 id. OAuth provider가 클라이언트를 식별하는데 사용된다.  
+3. clientSecret : 리소스와 관련된 secret. 기본적으로는 비어있다.  
+4. accessTokenUri : 엑세스 토큰을 제공하는 OAUth 엔트포인트 provider의 uri  
+5. scope : ","로 분리된 문자열의 리스트. 기본으론 스코프가 없다.  
+6. clientAuthenticationScheme : 엑세스 토큰 엔드포인트에 인증하기 위한 클라이언트가 사용하는 스키마. 제안되는 값은 : "http_basic", "form". 기본적으론 "http_basic" - 차조 : OAUth 2 spec의 2.1 section.  
+  
+다른 권한 타입은 Oauth2ProtectedResourceDetails의 확장이 다르다. 사용자 인증이 필요한 권한 타입은 아래와 같은 추가 속성이 있다. :  
+* userAuthorizationUri : 유저가 리소스에 접근하는걸 인증할 필요가 있다면 리다이렉트 되는 uri. 항상 요구되는 것은 아니다.  
+  
+## 클라이언트 구성  
+OAUth 2.0 클라이언트를 위해, 구성은 @EnableOAUth2CLient를 사용해서 간단화된다. 아래 두가지를 한다. :  
+1. oauth2ClientContextFlter ID와 함께 현재 요청과 내용을 저장하기 위해 필터 빈을 생성한다. 요청 동안 인증하기 위해 필요한 경우에 OAuth 인증 uri로부터 리다이렉션을 관리한다.  
+2. 요청 scope에 AccessTokenRequest 타입의 빈을 생성한다. 인증 코드 (또는 암시 적) 권한 부여 클라이언트가 개별 사용자와 관련된 상태가 충돌하지 않도록하는 데 사용할 수 있다.  
+  
+필터는 앱 안에 연결된다.  
+AccessTokenRequest는 OAUth2RestTemplate에 사용될 수 있다. :  
+<pre><code>
+@Autowired
+private OAuth2ClientContext oauth2Context;
 
+@Bean
+public OAuth2RestTemplate sparklrRestTemplate() {
+	return new OAuth2RestTemplate(sparklr(), oauth2Context);
+}
+</code></pre>  
+OAuth2ClientContext는 다른 유저의 상태를 별도로 유지하기 위해 session 범위에 배치된다. 그렇지 않으면 서버에서 동등한 데이터 구조를 직접 관리하고 요청을 사용자에게 맵핑하고 각 사용자의 OAuth2ClientContext 개별 인스턴스와 연관시켜야한다.  
+  
+## 보호된 리소스에 접근하기.  
+리소스에 대한 모든 구성을 제공하면 그 리소스들에 접근할 수 있다. 자원에 엑세스하기 위해 제안하는 방법은 RestTemplage을 사용하는 것이다. 스프링 시큐리티 OAuth는 OAuth2ProtectedResourceDetails의 인스턴스가 공급될 필요가 있는 RestTemplate의 확장을 가진다. 유저 토큰(authorization code 권한)을 사용하기 위해서 @EnableOAuth2Client 구성을 사용해라.  
+  
+일반적으로 웹 앱은 password 권한을 사용하지 않고 ResourceOwnerPasswordResourceDetails를 사용하는 것을 피한다. 부득이하게 password 권한을 자바 클라이언트로부터 동작할 필요가 있다면, OAuth2RestTemplate을 구성하고 ResourceOwnerPasswordResourceDetails가 아니라 AccessTokenRequest에 크리덴셜을 추가한다.  
+  
+## 클라이언트에 토큰 유지  
+클라이언트는 토큰을 유지할 필요는 없지만 클라이언트 앱이 재시작하는 매 시간에 새로운 토큰 유형 승인을 요청하지 않아도 되는 것이 좋다. ClientTokenServices 인터페이스는 특정 유저를 위해 OAuth 2.0 토큰을 유지할 필요가 있는 동작을 정의한다. JDBC 확장이 제공되지만, 디비에 인증 인스턴스와 관련되고 엑세스 토큰을 저장하는 것을 위한 자체 서비스를 확장하는게 선호된다. 이 기능을 사용하기를 원한다면 특별하게 구성된 TOkenProvider를 OAuth2RestTemplage에 구성하자.  
+  
+<pre><code>
+@Bean
+@Scope(value = "session", proxyMode = ScopedProxyMode.INTERFACES)
+public OAuth2RestOperations restTemplate() {
+	OAuth2RestTemplate template = new OAuth2RestTemplate(resource(), new DefaultOAuth2ClientContext(accessTokenRequest));
+	AccessTokenProviderChain provider = new AccessTokenProviderChain(Arrays.asList(new AuthorizationCodeAccessTokenProvider()));
+	provider.setClientTokenServices(clientTokenServices());
+	return template;
+}
+</code></pre>  
+  
+# 외부 OAuth2 provider의 클라이언트에 대한 사용자 정의
 
