@@ -1,0 +1,59 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+public class P_1094 {
+
+    static int count = 0;
+    static int result = 0;
+    static int bar = 64;
+    public static void main(String[] args) throws IOException {
+        InputStream is = System.in;
+        BufferedReader bf = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        int x = Integer.parseInt(bf.readLine());
+        bf.close();
+
+        cal(x, bar, bar);
+        System.out.println(count);
+
+    }
+
+    public static void cal(int x, int total, int min) {
+
+       // System.out.println(x + " , " + total + " , " + min + " , " + result);
+
+        if(min <= 0) {
+
+            return;
+        }
+
+        if(total == x) {
+            result += min;
+            count++;
+            return;
+        }
+        if(result == x) {
+            return;
+        }
+        //가지고 있는 막대를 전부 더해서 x보다 크다면
+
+        if(x <= bar) {
+            int temp = min/2;
+            //가장 짧은 길이의 막대를 반으로 나눈 것이 x보다 크다면 버린다.
+            if ((total-temp) >= x) {
+
+              //  System.out.println("min " + min / 2);
+                //자른 막대 하나를 버린다.
+                cal(x, total-temp, temp);
+
+                //작다면 버리지 않는다.
+            } else {
+
+                count++;
+                result += temp;
+                cal(x, total, min / 2);
+            }
+        }
+    }
+}
